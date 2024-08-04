@@ -131,7 +131,7 @@ public class JWTLoader {
         return new String(rsaPrivateKeySerialize);
     }
 
-    public RsaPrivateJwk parseRsaKeyJwk(String rsaPrivateKeyJwk) {
+    public RsaPrivateJwk parseRsaPrivateKeyJwk(String rsaPrivateKeyJwk) {
         return (RsaPrivateJwk) Jwks.parser()
                 .build()
                 .parse(rsaPrivateKeyJwk);

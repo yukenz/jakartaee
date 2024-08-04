@@ -3,25 +3,15 @@ package id.awan.jee;
 import id.awan.jee.bean.JWTLoader;
 import id.awan.jee.bean.RSAKeyLoader;
 import id.awan.jee.bean.ResourceLoader;
-import id.awan.jee.util.LZ4CompressionAlgorithm;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.jackson.io.JacksonDeserializer;
-import io.jsonwebtoken.jackson.io.JacksonSerializer;
-import io.jsonwebtoken.lang.Collections;
 import io.jsonwebtoken.security.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.security.Key;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.interfaces.RSAPrivateKey;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
 
 public class JwtTest {
 
@@ -96,7 +86,7 @@ public class JwtTest {
         KeyPair rsaKeyPair = new KeyPair(publicKey, privateKey);
 
         String rsaPrivateKeyJwk = jwtLoader.generateRsaPrivateKeyJwk((RSAPrivateKey) privateKey);
-        RsaPrivateJwk parseRsaKeyJwk  = jwtLoader.parseRsaKeyJwk(rsaPrivateKeyJwk);
+        RsaPrivateJwk parseRsaKeyJwk  = jwtLoader.parseRsaPrivateKeyJwk(rsaPrivateKeyJwk);
 
         System.out.println();
 
