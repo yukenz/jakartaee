@@ -1,0 +1,49 @@
+package id.awan.jee.resource.provider;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.ext.ParamConverter;
+import jakarta.ws.rs.ext.ParamConverterProvider;
+import jakarta.ws.rs.ext.Provider;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+
+
+@Provider
+public class JsonNodeProvider implements ParamConverterProvider {
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Override
+    public <T> ParamConverter<T> getConverter(Class<T> rawType, Type genericType, Annotation[] annotations) {
+
+        for (Annotation annotation : annotations) {
+            if (annotation.annotationType() == JsonNodeResolve.class) {
+                return jsonPayloadAnnotationParamConverter(rawType);
+            }
+        }
+
+        return null;
+    }
+
+    private <T> ParamConverter<T> jsonPayloadAnnotationParamConverter(Class<T> rawType) {
+        return new ParamConverter<>() {
+
+            @Override
+            public T fromString(String rawValue) {
+                try {
+                    JsonNode jsonNode = objectMapper.readTree(rawValue);
+                    return rawType.cast(jsonNode);
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to parse JSON", e);
+                }
+            }
+
+            @Override
+            public String toString(T rawValue) {
+                return rawValue.toString();
+            }
+        };
+    }
+}
