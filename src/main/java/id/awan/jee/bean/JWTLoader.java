@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwe;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.CompressionAlgorithm;
 import io.jsonwebtoken.jackson.io.JacksonSerializer;
 import io.jsonwebtoken.lang.Collections;
 import io.jsonwebtoken.security.Jwks;
@@ -24,12 +25,21 @@ public class JWTLoader {
 
     private final PublicKey publicKey;
     private final PrivateKey privateKey;
-    private final LZ4CompressionAlgorithm lz4;
+    private final CompressionAlgorithm compressionAlgorithm;
     private final String issuer;
     private final String keyId;
     private final long expiredDays;
     private final JacksonSerializer<Object> jacksonSerializer;
 
+    public JWTLoader() {
+        this.publicKey = null;
+        this.privateKey = null;
+        this.compressionAlgorithm = null;
+        this.issuer = null;
+        this.keyId = null;
+        this.expiredDays = 0;
+        this.jacksonSerializer = null;
+    }
 
     @Inject
     public JWTLoader(
@@ -43,7 +53,10 @@ public class JWTLoader {
         this.publicKey = rsaKeyLoader.publicKey(publicKeyBytes);
 
         this.jacksonSerializer = new JacksonSerializer<>();
-        this.lz4 = new LZ4CompressionAlgorithm();
+
+//        this.compressionAlgorithm = Jwts.ZIP.GZIP;
+//        this.compressionAlgorithm = Jwts.ZIP.DEF;
+        this.compressionAlgorithm = new LZ4CompressionAlgorithm();
 
         this.issuer = "JEE";
         this.keyId = "ssos";
@@ -65,14 +78,14 @@ public class JWTLoader {
                 .issuer(issuer)
                 .issuedAt(Date.from(nowInstant))
                 .expiration(Date.from(nowInstant.plus(expiredDays, ChronoUnit.DAYS)))
-                .compressWith(lz4)
+                .compressWith(compressionAlgorithm)
                 .signWith(privateKey, Jwts.SIG.RS512)
                 .compact();
     }
 
     public Jws<Claims> parseJWS(String jws) {
         return Jwts.parser()
-                .zip().add(lz4)
+                .zip().add(compressionAlgorithm)
                 .and()
                 .verifyWith(publicKey)
                 .build()
@@ -94,14 +107,14 @@ public class JWTLoader {
                 .issuer(issuer)
                 .issuedAt(Date.from(nowInstant))
                 .expiration(Date.from(nowInstant.plus(expiredDays, ChronoUnit.DAYS)))
-                .compressWith(lz4)
+                .compressWith(compressionAlgorithm)
                 .encryptWith(publicKey, Jwts.KEY.RSA_OAEP, Jwts.ENC.A256CBC_HS512)
                 .compact();
     }
 
     public Jwe<Claims> parseJWE(String jwe) {
         return Jwts.parser()
-                .zip().add(lz4)
+                .zip().add(compressionAlgorithm)
                 .and()
                 .decryptWith(privateKey)
                 .build()
