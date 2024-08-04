@@ -59,10 +59,10 @@ public class JwtTest {
 
         JWTLoader jwtLoader = new JWTLoader(resourceLoader, rsaKeyLoader);
         String jwe = jwtLoader
-                .generateJWE("AUD", "subject", "0000");
+                .generateJWE("SUB", "AUD", "0000");
         Jwe<Claims> claimsJwe = jwtLoader.parseJWE(jwe);
 
-        String jws = jwtLoader.generateJWS("AUD", "subject", "0000");
+        String jws = jwtLoader.generateJWS("SUB", "AUD", "0000");
         Jws<Claims> claimsJws = jwtLoader.parseJWS(jws);
 
 

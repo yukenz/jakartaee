@@ -18,7 +18,6 @@ import java.security.interfaces.RSAPrivateKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.Map;
 
 @ApplicationScoped
 public class JWTLoader {
@@ -26,6 +25,11 @@ public class JWTLoader {
     private final PublicKey publicKey;
     private final PrivateKey privateKey;
     private final LZ4CompressionAlgorithm lz4;
+    private final String issuer;
+    private final String keyId;
+    private final long expiredDays;
+    private final JacksonSerializer<Object> jacksonSerializer;
+
 
     @Inject
     public JWTLoader(
@@ -34,27 +38,33 @@ public class JWTLoader {
     ) {
         byte[] privateKeyBytes = resourceLoader.loadResourceAsBytes("key/privateKey.pkcs8.der");
         byte[] publicKeyBytes = resourceLoader.loadResourceAsBytes("key/publicKey.der");
+
         this.privateKey = rsaKeyLoader.privateKey(privateKeyBytes);
         this.publicKey = rsaKeyLoader.publicKey(publicKeyBytes);
-        lz4 = new LZ4CompressionAlgorithm();
 
+        this.jacksonSerializer = new JacksonSerializer<>();
+        this.lz4 = new LZ4CompressionAlgorithm();
+
+        this.issuer = "JEE";
+        this.keyId = "ssos";
+        this.expiredDays = 999;
     }
 
     public String generateJWS(
-            String aud,
             String sub,
+            String aud,
             String appId
     ) {
         Instant nowInstant = Instant.now();
         return Jwts.builder()
                 .header()
-                .keyId("ssos").and()
+                .keyId(keyId).and()
                 .audience().add(Collections.of(aud)).and()
                 .subject(sub)
-                .claims(Map.of("appId", appId))
-                .issuer("JEE")
+                .claim("appId", appId)
+                .issuer(issuer)
                 .issuedAt(Date.from(nowInstant))
-                .expiration(Date.from(nowInstant.plus(999, ChronoUnit.DAYS)))
+                .expiration(Date.from(nowInstant.plus(expiredDays, ChronoUnit.DAYS)))
                 .compressWith(lz4)
                 .signWith(privateKey, Jwts.SIG.RS512)
                 .compact();
@@ -70,20 +80,20 @@ public class JWTLoader {
     }
 
     public String generateJWE(
-            String aud,
             String sub,
+            String aud,
             String appId
     ) {
         Instant nowInstant = Instant.now();
         return Jwts.builder()
                 .header()
-                .keyId("ssos").and()
+                .keyId(keyId).and()
                 .audience().add(Collections.of(aud)).and()
                 .subject(sub)
-                .claims(Map.of("appId", appId))
-                .issuer("JEE")
+                .claim("appId", appId)
+                .issuer(issuer)
                 .issuedAt(Date.from(nowInstant))
-                .expiration(Date.from(nowInstant.plus(999, ChronoUnit.DAYS)))
+                .expiration(Date.from(nowInstant.plus(expiredDays, ChronoUnit.DAYS)))
                 .compressWith(lz4)
                 .encryptWith(publicKey, Jwts.KEY.RSA_OAEP, Jwts.ENC.A256CBC_HS512)
                 .compact();
@@ -104,7 +114,7 @@ public class JWTLoader {
         RsaPrivateJwk rsaPrivateJwk = Jwks.builder()
                 .key(privateKey)
                 .build();
-        byte[] rsaPrivateKeySerialize = new JacksonSerializer<>().serialize(rsaPrivateJwk);
+        byte[] rsaPrivateKeySerialize = jacksonSerializer.serialize(rsaPrivateJwk);
         return new String(rsaPrivateKeySerialize);
     }
 
